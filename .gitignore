@@ -1,0 +1,17 @@
+Add-Content .gitignore @"
+# dbt artifacts
+target/
+dbt_packages/
+logs/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+uv.lock
+.python-version
+
+# Sensitive
+aws_dbt_project/profiles.yml
+aws_dbt_project/.user.yml
+"@
