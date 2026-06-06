@@ -1,0 +1,22 @@
+{{ config(
+    materialized='incremental',
+    unique_key='BOOKING_ID'
+) }}
+
+SELECT 
+    BOOKING_ID,
+    NIGHTS_BOOKED,
+    BOOKING_AMOUNT,
+    CLEANING_FEE,
+    SERVICE_FEE,
+    (NIGHTS_BOOKED * BOOKING_AMOUNT) + CLEANING_FEE + SERVICE_FEE AS TOTAL_AMOUNT,
+    BOOKING_STATUS,
+    CREATED_AT
+FROM {{ ref('bronze_Boooking') }}
+
+{# {% if is_incremental() %}
+    WHERE CREATED_AT > (
+        SELECT COALESCE(MAX(CREATED_AT), '1900-01-01')
+        FROM {{ this }}
+    )
+{% endif %} #}
