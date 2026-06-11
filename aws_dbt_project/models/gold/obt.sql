@@ -1,40 +1,46 @@
+{{ config(materialized='table', schema='gold') }}
+
 {% set tables = [
     {
-        'table': ref('bronze_Boooking'),
-        'columns': '*',
-        'alias': 'bronze_Boooking'
+        'table': ref('silver_booking'),
+        'alias': 'silver_booking',
+        'join': none
     },
     {
-        'table': ref('bronze_listinings'),
-        'columns': '*',
-        'alias': 'bronze_listinings',
-        'join_condition': 'bronze_Boooking.LISTING_ID = bronze_listinings.LISTING_ID'
+        'table': ref('silver_listening'),
+        'alias': 'silver_listening',
+        'join': 'silver_booking.LISTING_ID = silver_listening.LISTING_ID',
+        'join_type': 'LEFT'
     },
     {
-        'table': ref('bronze_host'),
-        'columns': '*',
-        'alias': 'bronze_host',
-        'join_condition': 'bronze_Boooking.HOST_ID = bronze_host.HOST_ID'
+        'table': ref('silver_host'),
+        'alias': 'silver_host',
+        'join': 'silver_listening.HOST_ID = silver_host.HOST_ID',
+        'join_type': 'LEFT'
     }
 ] %}
 
 SELECT
-    bronze_Boooking.*,
-    bronze_listinings.LISTING_ID,
-    bronze_listinings.COUNTRY,
-    bronze_listinings.ACCOMMODATES,
-    bronze_listinings.BEDROOMS,
-    bronze_listinings.BATHROOMS,
-    bronze_listinings.PRICE_PER_NIGHT,
+    silver_booking.*,
+    silver_listening.HOST_ID,
+    silver_listening.COUNTRY,
+    silver_listening.ACCOMMODATES,
+    silver_listening.BEDROOMS,
+    silver_listening.BATHROOMS,
+    silver_listening.PRICE_PER_NIGHT,
     silver_listening.TOTAL_CAPACITY_PRICE,
     silver_listening.MONTHLY_PRICE,
-    bronze_host.HOST_ID,
-    bronze_host.HOST_NAME,
+    silver_host.HOST_NAME,
     silver_host.HOST_NAME_CLEAN,
-    bronze_host.IS_SUPERHOST,
-    bronze_host.RESPONSE_RATE
-FROM {{ tables[0].table }} AS bronze_Boooking
-JOIN {{ tables[1].table }} AS bronze_listinings
-    ON {{ tables[1].join_condition }}
-JOIN {{ tables[2].table }} AS bronze_host
-    ON {{ tables[2].join_condition }}
+    silver_host.IS_SUPERHOST,
+    silver_host.RESPONSE_RATE,
+    silver_host.CREATED_AT AS HOST_CREATED_AT
+FROM
+{% for t in tables %}
+    {% if loop.first %}
+        {{ t.table }} AS {{ t.alias }}
+    {% else %}
+        {{ t.join_type }} JOIN {{ t.table }} AS {{ t.alias }}
+        ON {{ t.join }}
+    {% endif %}
+{% endfor %}
